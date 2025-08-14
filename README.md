@@ -33,7 +33,7 @@ ag field in user settings
 #### 4. **Utilities** (backend/open_webui/utils/rag_utils.py)
 - get_rag_output_format() - Determine format with priority system
 - get_rag_template_by_format() - Get template for specific format
-- pply_rag_format_settings() - Apply format-specific settings
+- apply_rag_format_settings() - Apply format-specific settings
 
 #### 5. **Core Logic Updates**
 - **Task Utils** (backend/open_webui/utils/task.py)
@@ -76,6 +76,7 @@ RAG_OUTPUT_FORMATS=compact,detailed,academic,table,list
 1. **Per-Chat** (highest priority) - Chat-specific settings
 2. **Per-User** - User's default preferences
 3. **Global** (lowest priority) - System-wide defaults
+
 
 
 
