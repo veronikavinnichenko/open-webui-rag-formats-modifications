@@ -965,17 +965,36 @@ async def process_chat_payload(request, form_data, user, metadata, model):
         rag_output_format = None
         try:
             from open_webui.utils.rag_utils import get_rag_output_format
-            
-            # Получаем параметры чата и настройки пользователя
-            chat_params = metadata.get("chat_params", {})
-            user_settings = user.settings.model_dump() if hasattr(user, 'settings') and user.settings else {}
+
+            # Получаем chat_id для загрузки meta из БД
+            chat_id = metadata.get("chat_id")
+            chat_meta = {}
+            try:
+                if chat_id:
+                    chat_item = Chats.get_chat_by_id(chat_id)
+                    if chat_item and hasattr(chat_item, "meta"):
+                        chat_meta = chat_item.meta or {}
+            except Exception:
+                chat_meta = {}
+
+            # Получаем настройки пользователя
+            user_settings = (
+                user.settings.model_dump() if hasattr(user, "settings") and user.settings else {}
+            )
             global_config = {
                 "RAG_OUTPUT_FORMAT_DEFAULT": request.app.state.config.RAG_OUTPUT_FORMAT_DEFAULT
             }
-            
-            rag_output_format = get_rag_output_format(chat_params, user_settings, global_config)
+
+            # chat_params сохраняем для обратной совместимости, но основное — meta
+            chat_params = metadata.get("chat_params", {})
+            rag_output_format = get_rag_output_format(
+                chat_params=chat_params,
+                chat_meta=chat_meta,
+                user_settings=user_settings,
+                global_config=global_config,
+            )
             log.debug(f"Using RAG output format: {rag_output_format}")
-            
+
         except Exception as e:
             log.warning(f"Could not determine RAG output format: {e}")
             rag_output_format = None

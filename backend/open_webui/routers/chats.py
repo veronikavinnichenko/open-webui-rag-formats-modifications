@@ -875,12 +875,15 @@ async def update_chat_rag_params(
     """
     chat = Chats.get_chat_by_id_and_user_id(id, user.id)
     if chat:
-        # Обновляем только RAG параметры, не затрагивая остальные данные чата
-        current_params = chat.params if hasattr(chat, 'params') else {}
-        updated_params = {**current_params, "rag": form_data.rag}
-        
-        # Обновляем чат с новыми параметрами
-        chat = Chats.update_chat_params_by_id(id, updated_params)
+        # Обновляем только RAG параметры в meta.rag, не затрагивая остальные данные чата
+        current_meta = chat.meta or {}
+        current_rag = current_meta.get("rag", {})
+        # Мердж частичных настроек
+        current_rag.update(form_data.rag or {})
+        current_meta["rag"] = current_rag
+
+        # Обновляем чат с новыми meta
+        chat = Chats.update_chat_meta_by_id(id, current_meta)
         return ChatResponse(**chat.model_dump())
     else:
         raise HTTPException(

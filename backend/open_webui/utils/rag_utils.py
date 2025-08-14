@@ -8,6 +8,7 @@ log.setLevel(SRC_LOG_LEVELS["RAG"])
 
 def get_rag_output_format(
     chat_params: Optional[Dict[str, Any]] = None,
+    chat_meta: Optional[Dict[str, Any]] = None,
     user_settings: Optional[Dict[str, Any]] = None,
     global_config: Optional[Dict[str, Any]] = None
 ) -> str:
@@ -18,7 +19,8 @@ def get_rag_output_format(
     3. Global (по умолчанию)
     
     Args:
-        chat_params: Параметры чата (из chat.params)
+        chat_params: Параметры чата (из chat.params) — для обратной совместимости
+        chat_meta: Метаданные чата (используем meta["rag"])
         user_settings: Настройки пользователя (из user.settings)
         global_config: Глобальная конфигурация
         
@@ -26,11 +28,20 @@ def get_rag_output_format(
         str: Название формата вывода
     """
     # 1. Per-Chat (высший приоритет)
+    # 1a. Новый способ: meta.rag
+    if chat_meta and isinstance(chat_meta, dict):
+        rag_settings = chat_meta.get("rag", {})
+        if isinstance(rag_settings, dict) and rag_settings.get("output_format"):
+            format_type = rag_settings["output_format"]
+            log.debug(f"Using per-chat RAG output format (meta): {format_type}")
+            return format_type
+
+    # 1b. Старый способ: params.rag (обратная совместимость)
     if chat_params and isinstance(chat_params, dict):
         rag_settings = chat_params.get("rag", {})
         if isinstance(rag_settings, dict) and rag_settings.get("output_format"):
             format_type = rag_settings["output_format"]
-            log.debug(f"Using per-chat RAG output format: {format_type}")
+            log.debug(f"Using per-chat RAG output format (params): {format_type}")
             return format_type
     
     # 2. Per-User
